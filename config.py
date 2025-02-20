@@ -227,6 +227,74 @@ Exᴀᴍᴩʟᴇ:- `/set_prefix @Digital_Botz`
 ┣⪼ 🚀 ꜱᴩᴇᴇᴅ: {3}/s
 ┣⪼ ⏰️ ᴇᴛᴀ: {4}
 ╰━━━━━━━━━━━━━━━➣ </b>"""
+    from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+import os
+
+# Your bot token from BotFather
+TOKEN = "YOUR_BOT_TOKEN_HERE"
+
+def start(update: Update, context: CallbackContext):
+    """Sends a welcome message when the bot starts."""
+    update.message.reply_text(
+        "Hello! Send me a file, and I will rename it for you.\n\n"
+        "To rename, reply to your file with `/rename new_filename.extension`."
+    )
+
+def rename_file(update: Update, context: CallbackContext):
+    """Handles renaming of the file."""
+    message = update.message
+    if not message.document:
+        update.message.reply_text("Please send a file first.")
+        return
+
+    # Check if the user provided a new filename
+    if len(context.args) < 1:
+        update.message.reply_text("Please provide a new filename using `/rename new_filename.extension`.")
+        return
+
+    # Extract new file name
+    new_filename = " ".join(context.args)
+
+    # Check for valid file extension
+    if not os.path.splitext(new_filename)[1]:
+        update.message.reply_text("Please include a valid file extension (e.g., `.txt`, `.jpg`).")
+        return
+
+    # Download the file
+    file = message.document.get_file()
+    file_path = file.download()
+
+    # Create the new file path
+    new_path = os.path.join(os.path.dirname(file_path), new_filename)
+
+    # Rename the file
+    os.rename(file_path, new_path)
+
+    # Send the renamed file back to the user
+    with open(new_path, 'rb') as renamed_file:
+        update.message.reply_document(renamed_file, filename=new_filename)
+
+    # Clean up the renamed file
+    os.remove(new_path)
+
+    update.message.reply_text(f"Your file has been renamed to `{new_filename}`.")
+
+def main():
+    """Main function to start the bot."""
+    updater = Updater(TOKEN)
+    dispatcher = updater.dispatcher
+
+    # Command handlers
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("rename", rename_file))
+
+    # Start the bot
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == "__main__":
+    main()
 
 # Rkn Developer 
 # Don't Remove Credit 😔
